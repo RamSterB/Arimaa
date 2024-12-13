@@ -3,6 +3,15 @@ class ArimaaGame:
         self.board = self.initialize_board()
         self.current_player = "gold"
         self.steps_taken = 0
+        self.piece_weights = {
+            "E": 5,  # Elefante
+            "C": 4,  # Camello
+            "H": 3,  # Caballo
+            "D": 2,  # Perro
+            "A": 1,  # Gato
+            "R": 0,  # Conejo
+            "e": 5, "c": 4, "h": 3, "d": 2, "a": 1, "r": 0
+        }
 
     def initialize_board(self):
         """Inicializa el tablero con las piezas en sus posiciones iniciales."""
@@ -22,7 +31,9 @@ class ArimaaGame:
     def get_piece_at(self, position):
         """Devuelve la pieza en una posición específica."""
         row, col = position
-        return self.board[row][col]
+        if 0 <= row < 8 and 0 <= col < 8:
+            return self.board[row][col]
+        return None
 
     def move_piece(self, start, end):
         """Mueve una pieza desde una posición inicial a una posición final."""
@@ -30,22 +41,34 @@ class ArimaaGame:
         end_row, end_col = end
         piece = self.get_piece_at(start)
 
+        # Comprobamos que la pieza existe en la posición de inicio
         if not piece:
             raise ValueError("No hay pieza en la posición inicial.")
 
+        # Verificamos si la posición final está ocupada
         if self.board[end_row][end_col]:
             raise ValueError("La posición final ya está ocupada.")
-
+        
+        # Verificamos que la pieza se mueva solo a una casilla adyacente
         if abs(start_row - end_row) + abs(start_col - end_col) != 1:
             raise ValueError("Movimiento inválido: las piezas solo pueden moverse una casilla a la vez.")
+        
+        # Prohibir que los conejos se muevan hacia atrás
+        if piece.lower() == "r" and (
+            (piece.isupper() and end_row < start_row) or (piece.islower() and end_row > start_row)
+        ):
+            raise ValueError("Los conejos no pueden moverse hacia atrás.")
 
+        # Asegurarse de que no se realicen más de 4 movimientos en un turno
         if self.steps_taken >= 4:
             raise ValueError("Se han tomado demasiados pasos en este turno.")
 
+        # Si todas las validaciones pasan, realizamos el movimiento
         self.board[start_row][start_col] = None
         self.board[end_row][end_col] = piece
         self.steps_taken += 1
-        
+        print(f"{piece} movido de {start} a {end}")
+
 
     def change_turn(self, trap_positions):
         """Cambia el turno al siguiente jugador."""
@@ -78,6 +101,52 @@ class ArimaaGame:
                 if adj_piece in allies:
                     return True
         return False
+    
+    def push_piece(self, pusher_pos, pushed_pos, new_pos):
+        """Empuja una pieza enemiga a una nueva posición."""
+        pusher = self.get_piece_at(pusher_pos)
+        pushed = self.get_piece_at(pushed_pos)
+
+        if not pusher or not pushed:
+            raise ValueError("Empuje inválido: falta una pieza.")
+        
+        if self.piece_weights[pusher] <= self.piece_weights[pushed]:
+            raise ValueError("Empuje inválido: el empujador debe ser más fuerte que la pieza empujada.")
+
+        if self.board[new_pos[0]][new_pos[1]] is not None:
+            raise ValueError("Empuje inválido: la nueva posición debe estar vacía.")
+
+        if abs(pushed_pos[0] - new_pos[0]) + abs(pushed_pos[1] - new_pos[1]) != 1:
+            raise ValueError("Empuje inválido: la pieza empujada solo puede moverse una casilla.")
+
+        # Realizar el empuje
+        self.board[pusher_pos[0]][pusher_pos[1]] = None
+        self.board[new_pos[0]][new_pos[1]] = pushed
+        self.board[pushed_pos[0]][pushed_pos[1]] = pusher
+        self.steps_taken += 2
+
+    def pull_piece(self, puller_pos, pulled_pos, new_pos):
+        """Jala una pieza enemiga hacia la posición anterior del jalador."""
+        puller = self.get_piece_at(puller_pos)
+        pulled = self.get_piece_at(pulled_pos)
+
+        if not puller or not pulled:
+            raise ValueError("Jalada inválida: falta una pieza.")
+        
+        if self.piece_weights[puller] <= self.piece_weights[pulled]:
+            raise ValueError("Jalada inválida: el jalador debe ser más fuerte que la pieza jalada.")
+
+        if self.board[new_pos[0]][new_pos[1]] is not None:
+            raise ValueError("Jalada inválida: la nueva posición debe estar vacía.")
+
+        if abs(puller_pos[0] - new_pos[0]) + abs(puller_pos[1] - new_pos[1]) != 1:
+            raise ValueError("Jalada inválida: la posición del jalador solo puede moverse una casilla.")
+
+        # Realizar la jalada
+        self.board[pulled_pos[0]][pulled_pos[1]] = None
+        self.board[new_pos[0]][new_pos[1]] = puller
+        self.board[puller_pos[0]][puller_pos[1]] = pulled
+        self.steps_taken += 2
 
     def check_victory_conditions(self):
         """Verifica si se han cumplido las condiciones de victoria."""

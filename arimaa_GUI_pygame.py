@@ -20,13 +20,15 @@ class ArimaaPygame:
     def __init__(self):
         pygame.init()
         self.game = ArimaaGame()
-        self.screen = pygame.display.set_mode((WINDOW_SIZE, WINDOW_SIZE))
+        self.screen = pygame.display.set_mode((WINDOW_SIZE, WINDOW_SIZE + 50))
         pygame.display.set_caption("Arimaa Game")
         self.selected_piece = None
         self.dragging_piece = False
         self.dragging_path = []
         self.running = True
         self.moves_made = 0
+        # Añadir el botón de pasar turno
+        self.pass_turn_button = pygame.Rect(WINDOW_SIZE - 150, WINDOW_SIZE, 140, 40)
 
     def draw_board(self):
         """Dibuja el tablero de juego."""
@@ -38,6 +40,12 @@ class ArimaaPygame:
                 else:
                     color = WHITE if (row + col) % 2 == 0 else GRAY
                 pygame.draw.rect(self.screen, color, rect)
+                
+        # Dibuja el botón de pasar turno
+        pygame.draw.rect(self.screen, (0, 255, 0), self.pass_turn_button)  # Color verde para el botón
+        font = pygame.font.SysFont(None, 30)
+        text = font.render("Pasar Turno", True, (0, 0, 0))
+        self.screen.blit(text, (self.pass_turn_button.x + 10, self.pass_turn_button.y + 10))        
 
     def draw_pieces(self):
         """Dibuja las piezas en el tablero."""
@@ -78,12 +86,22 @@ class ArimaaPygame:
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 position = self.get_clicked_position(event.pos)
                 self.handle_mouse_down(position)
+                 # Detecta el clic en el botón de pasar turno
+                if self.pass_turn_button.collidepoint(event.pos):
+                    self.pass_turn()
+                    
             elif event.type == pygame.MOUSEBUTTONUP:
                 position = self.get_clicked_position(event.pos)
                 self.handle_mouse_up(position)
             elif event.type == pygame.MOUSEMOTION:
                 self.handle_mouse_motion(event.pos)
 
+    def pass_turn(self):
+        """Maneja la acción de pasar el turno."""
+        print("Pasando el turno...")
+        self.game.change_turn(TRAP_POSITIONS)
+        self.moves_made = 0  # Restablecer los pasos
+    
     def handle_mouse_down(self, position):
         """Maneja el inicio del arrastre."""
         piece = self.game.get_piece_at(position)
@@ -105,8 +123,6 @@ class ArimaaPygame:
                         self.moves_made = 0
                         self.game.change_turn(TRAP_POSITIONS)
                 self.selected_piece = None
-                
-                
                 
             except ValueError as e:
                 print(e)
