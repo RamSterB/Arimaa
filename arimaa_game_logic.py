@@ -45,14 +45,18 @@ class ArimaaGame:
         if not piece:
             raise ValueError("No hay pieza en la posición inicial.")
 
+        # Verificar si la pieza está congelada
+        if self.is_frozen(start):
+            raise ValueError("La pieza está congelada y no puede moverse.")
+
         # Verificamos si la posición final está ocupada
         if self.board[end_row][end_col]:
             raise ValueError("La posición final ya está ocupada.")
-        
+
         # Verificamos que la pieza se mueva solo a una casilla adyacente
         if abs(start_row - end_row) + abs(start_col - end_col) != 1:
             raise ValueError("Movimiento inválido: las piezas solo pueden moverse una casilla a la vez.")
-        
+
         # Prohibir que los conejos se muevan hacia atrás
         if piece.lower() == "r" and (
             (piece.isupper() and end_row < start_row) or (piece.islower() and end_row > start_row)
@@ -78,6 +82,33 @@ class ArimaaGame:
         # Validar estado del juego si es necesario
         self.check_trap_positions(trap_positions)
         self.check_victory_conditions()
+
+    def is_frozen(self, position):
+        """Determina si una pieza en una posición está congelada."""
+        row, col = position
+        piece = self.get_piece_at(position)
+        if not piece:
+            return False  # Una posición vacía no puede estar congelada
+
+        # Determinar equipo de la pieza
+        allies = set("RCDHEP" if piece.isupper() else "rcdhep")
+        enemies = set("rcdhep" if piece.isupper() else "RCDHEP")
+
+        # Verificar piezas adyacentes
+        has_ally = False
+        is_overpowered = False
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            adj_row, adj_col = row + dr, col + dc
+            if 0 <= adj_row < 8 and 0 <= adj_col < 8:
+                adj_piece = self.get_piece_at((adj_row, adj_col))
+                if adj_piece in allies:
+                    has_ally = True
+                elif adj_piece in enemies:
+                    if self.piece_weights[adj_piece] > self.piece_weights[piece]:
+                        is_overpowered = True
+
+        # Una pieza está congelada si está sobrepasada por el enemigo y no tiene aliados
+        return is_overpowered and not has_ally
 
     def check_trap_positions(self, trap_positions):
         """Verifica si alguna pieza debe ser eliminada por estar en una trampa sin apoyo."""
@@ -173,13 +204,55 @@ class ArimaaGame:
 
     def check_victory_conditions(self):
         """Verifica si se han cumplido las condiciones de victoria."""
-        for col in range(8):
-            if self.board[0][col] == "r":
-                print("¡Plata gana!")
-                self.end_game()
-            if self.board[7][col] == "R":
-                print("¡Oro gana!")
-                self.end_game()
+        gold_rabbits = 0
+        silver_rabbits = 0
+        gold_has_moves = False
+        silver_has_moves = False
+
+        for row in range(8):
+            for col in range(8):
+                piece = self.board[row][col]
+                if not piece:
+                    continue
+
+                # Verificar conejos en el extremo del tablero
+                if piece == "R":
+                    gold_rabbits += 1
+                    if row == 7:
+                        print("¡Oro gana!")
+                        self.end_game()
+                elif piece == "r":
+                    silver_rabbits += 1
+                    if row == 0:
+                        print("¡Plata gana!")
+                        self.end_game()
+
+                # Verificar si la pieza puede moverse (no está congelada)
+                if not self.is_frozen((row, col)):
+                    is_gold = piece.isupper()
+                    for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                        new_row, new_col = row + dr, col + dc
+                        if 0 <= new_row < 8 and 0 <= new_col < 8 and self.board[new_row][new_col] is None:
+                            if is_gold:
+                                gold_has_moves = True
+                            else:
+                                silver_has_moves = True
+
+        # Condición de victoria por eliminación de conejos
+        if gold_rabbits == 0:
+            print("¡Plata gana! (Oro sin conejos)")
+            self.end_game()
+        if silver_rabbits == 0:
+            print("¡Oro gana! (Plata sin conejos)")
+            self.end_game()
+
+        # Condición de victoria por inmovilidad
+        if not gold_has_moves:
+            print("¡Plata gana! (Oro inmovilizado)")
+            self.end_game()
+        if not silver_has_moves:
+            print("¡Oro gana! (Plata inmovilizada)")
+            self.end_game()
 
     def end_game(self):
         """Finaliza el juego."""
