@@ -77,13 +77,14 @@ class ArimaaGame:
 
     def make_best_move(self):
         """Realiza el mejor movimiento usando el algoritmo minimax."""
-        best_move = find_best_move(self.board)
-        if best_move:
-            start, end = best_move
-            self.move_piece(start, end)
-            print(f"IA realizó el movimiento de {start} a {end}")
-        else:
-            print("No hay movimientos disponibles para la IA.")
+        for _ in range(4 - self.steps_taken):
+            best_move = find_best_move(self.board)
+            if best_move:
+                start, end = best_move
+                self.move_piece(start, end)
+                print(f"IA realizó el movimiento de {start} a {end}")
+            else:
+                print("No hay movimientos disponibles para la IA.")
 
     def is_frozen(self, position):
         """Determina si una pieza en una posición está congelada."""
