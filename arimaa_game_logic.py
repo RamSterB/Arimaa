@@ -75,36 +75,6 @@ class ArimaaGame:
         self.steps_taken += 1
         print(f"{piece} movido de {start} a {end}")
 
-
-    def change_turn(self, trap_positions):
-        """Cambia el turno al siguiente jugador."""
-        if self.current_player == "gold":
-            self.current_player = "silver"
-            self.steps_taken = 0
-
-            # Validar estado del juego si es necesario
-            self.check_trap_positions(trap_positions)
-            self.check_victory_conditions()
-
-            # Movimiento de la IA (fichas de plata)
-            for _ in range(4):
-                best_move = find_best_move(self.board)
-                if best_move:
-                    start, end = best_move
-                    self.move_piece(start, end)
-                    print(f"Plata movió de {start} a {end}")
-
-            # Validar estado del juego después del movimiento de la IA
-            self.check_trap_positions(trap_positions)
-            self.check_victory_conditions()
-        else:
-            self.current_player = "gold"
-            self.steps_taken = 0
-
-            # Validar estado del juego si es necesario
-            self.check_trap_positions(trap_positions)
-            self.check_victory_conditions()
-
     def is_frozen(self, position):
         """Determina si una pieza en una posición está congelada."""
         row, col = position
@@ -180,7 +150,8 @@ class ArimaaGame:
             raise ValueError("Empuje inválido: el empujador no está adyacente a la pieza empujada.")
         if abs(pushed_pos[0] - new_pos[0]) + abs(pushed_pos[1] - new_pos[1]) != 1:
             raise ValueError("Empuje inválido: la nueva posición no está adyacente a la pieza empujada.")
-
+            
+        
         # Realizar el empuje
         self.board[pusher_pos[0]][pusher_pos[1]] = None  # El empujador deja su posición
         self.board[new_pos[0]][new_pos[1]] = pushed     # La pieza empujada se mueve
@@ -275,6 +246,17 @@ class ArimaaGame:
         if not silver_has_moves:
             print("¡Oro gana! (Plata inmovilizada)")
             self.end_game()
+            
+            
+    
+    def change_turn(self, trap_positions):
+        """Cambia el turno al siguiente jugador."""
+        self.current_player = "silver" if self.current_player == "gold" else "gold"
+        self.steps_taken = 0
+
+        # Validar estado del juego si es necesario
+        self.check_trap_positions(trap_positions)
+        self.check_victory_conditions()
 
     def end_game(self):
         """Finaliza el juego."""
