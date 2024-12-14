@@ -75,6 +75,16 @@ class ArimaaGame:
         self.steps_taken += 1
         print(f"{piece} movido de {start} a {end}")
 
+    def make_best_move(self):
+        """Realiza el mejor movimiento usando el algoritmo minimax."""
+        best_move = find_best_move(self.board)
+        if best_move:
+            start, end = best_move
+            self.move_piece(start, end)
+            print(f"IA realizó el movimiento de {start} a {end}")
+        else:
+            print("No hay movimientos disponibles para la IA.")
+
     def is_frozen(self, position):
         """Determina si una pieza en una posición está congelada."""
         row, col = position
@@ -245,18 +255,25 @@ class ArimaaGame:
             self.end_game()
         if not silver_has_moves:
             print("¡Oro gana! (Plata inmovilizada)")
-            self.end_game()
-            
-            
+            self.end_game()      
     
     def change_turn(self, trap_positions):
-        """Cambia el turno al siguiente jugador."""
+        """Cambia el turno y activa la IA para silver."""
         self.current_player = "silver" if self.current_player == "gold" else "gold"
         self.steps_taken = 0
-
-        # Validar estado del juego si es necesario
+        
+        # Validar estado
         self.check_trap_positions(trap_positions)
         self.check_victory_conditions()
+
+        # Activar IA para silver
+        if self.current_player == "silver":
+            try:
+                self.make_best_move()
+                self.current_player = "gold"
+                self.steps_taken = 0
+            except Exception as e:
+                print(f"Error en movimiento de IA: {e}")
 
     def end_game(self):
         """Finaliza el juego."""
@@ -269,7 +286,4 @@ if __name__ == "__main__":
     print("Estado inicial del tablero:")
     for row in game.get_board_state():
         print(row)
-    game.make_best_move()
-    print("Estado del tablero después del mejor movimiento de plata:")
-    for row in game.get_board_state():
-        print(row)
+    game.make_best_move() # Este método no existe en la clase ArimaaGame

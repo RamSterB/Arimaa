@@ -62,12 +62,16 @@ def find_best_move(board):
     best_move = None
     best_value = float('-inf')
     moves = generate_moves(board, "silver")
+    
+    if not moves:
+        return None
+        
     for move in moves:
         new_board = [row[:] for row in board]
         start, end = move
         new_board[end[0]][end[1]] = new_board[start[0]][start[1]]
         new_board[start[0]][start[1]] = None
-        move_value = minimax(new_board, 3, False)
+        move_value = minimax(new_board, 2, False)  # Reducir profundidad a 2
         if move_value > best_value:
             best_value = move_value
             best_move = move

@@ -126,12 +126,12 @@ class ArimaaPygame:
 
     def pass_turn(self):
         """Maneja la acción de pasar el turno."""
-        print("Pasando el turno...")
         if self.moves_made > 0:
             self.game.change_turn(TRAP_POSITIONS)
-            self.moves_made = 0  # Restablecer los pasos
-        else: # Evitar pasar el turno sin hacer movimientos
-            print("Debes realizar al menos un movimiento antes de pasar el turno.")    
+            self.moves_made = 0
+            print("Turno pasado.")
+        else:
+            print("Debes realizar al menos un movimiento antes de pasar.")  
 
     def handle_mouse_down(self, position):
         """Maneja el inicio del arrastre."""
