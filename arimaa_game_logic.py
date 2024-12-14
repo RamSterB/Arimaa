@@ -1,4 +1,5 @@
-from arimaa_ai import ArimaaAI
+from arimaa_ai import find_best_move
+from arimaa_utils import is_frozen, piece_weights
 
 class ArimaaGame:
     def __init__(self):
@@ -7,14 +8,13 @@ class ArimaaGame:
         self.steps_taken = 0
         self.piece_weights = {
             "E": 5,  # Elefante
-            "C": 4,  # Camello
+            "A": 4,  # Camello
             "H": 3,  # Caballo
             "D": 2,  # Perro
-            "A": 1,  # Gato
+            "C": 1,  # Gato
             "R": 0,  # Conejo
-            "e": 5, "c": 4, "h": 3, "d": 2, "a": 1, "r": 0
+            "e": 5, "a": 4, "h": 3, "d": 2, "c": 1, "r": 0
         }
-        self.ai = ArimaaAI(self.piece_weights)  # Crear instancia de AI
 
     def initialize_board(self):
         """Inicializa el tablero con las piezas en sus posiciones iniciales."""
@@ -79,7 +79,7 @@ class ArimaaGame:
     def make_best_move(self):
         """Realiza el mejor movimiento usando el algoritmo minimax."""
         for _ in range(4 - self.steps_taken):
-            best_move = self.ai.find_best_move(self.board)  # Usar la instancia de AI
+            best_move = find_best_move(self.board)  # Usar la instancia de AI
             if best_move:
                 start, end = best_move
                 if start != end:
@@ -91,31 +91,7 @@ class ArimaaGame:
                 print("No hay movimientos disponibles para la IA.")
     
     def is_frozen(self, position):
-        """Determina si una pieza en una posición está congelada."""
-        row, col = position
-        piece = self.get_piece_at(position)
-        if not piece:
-            return False  # Una posición vacía no puede estar congelada
-
-        # Determinar equipo de la pieza
-        allies = set("RCDHEP" if piece.isupper() else "rcdhep")
-        enemies = set("rcdhep" if piece.isupper() else "RCDHEP")
-
-        # Verificar piezas adyacentes
-        has_ally = False
-        is_overpowered = False
-        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-            adj_row, adj_col = row + dr, col + dc
-            if 0 <= adj_row < 8 and 0 <= adj_col < 8:
-                adj_piece = self.get_piece_at((adj_row, adj_col))
-                if adj_piece in allies:
-                    has_ally = True
-                elif adj_piece in enemies:
-                    if self.piece_weights[adj_piece] > self.piece_weights[piece]:
-                        is_overpowered = True
-
-        # Una pieza está congelada si está sobrepasada por el enemigo y no tiene aliados
-        return is_overpowered and not has_ally
+        return is_frozen(self.board, position)
 
     def check_trap_positions(self, trap_positions):
         """Verifica si alguna pieza debe ser eliminada por estar en una trampa sin apoyo."""
