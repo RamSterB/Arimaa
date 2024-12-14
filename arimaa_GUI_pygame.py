@@ -20,16 +20,15 @@ class ArimaaPygame:
     def __init__(self):
         pygame.init()
         self.game = ArimaaGame()
-        self.screen = pygame.display.set_mode((WINDOW_SIZE, WINDOW_SIZE + 50))
+        self.screen = pygame.display.set_mode((WINDOW_SIZE, WINDOW_SIZE + 100))  # Espacio extra para el label
         pygame.display.set_caption("Arimaa Game")
+        self.font = pygame.font.SysFont(None, 30)
         self.selected_piece = None
         self.dragging_piece = False
         self.dragging_path = []
         self.running = True
         self.moves_made = 0
-        # Añadir el botón de pasar turno
-        self.pass_turn_button = pygame.Rect(WINDOW_SIZE - 150, WINDOW_SIZE, 140, 40)
-        # Botones adicionales
+        # Añadir botones
         self.pass_turn_button = pygame.Rect(WINDOW_SIZE - 150, WINDOW_SIZE + 10, 140, 40)
         self.push_button = pygame.Rect(10, WINDOW_SIZE + 10, 140, 40)
         self.pull_button = pygame.Rect(160, WINDOW_SIZE + 10, 140, 40)
@@ -45,21 +44,29 @@ class ArimaaPygame:
                 else:
                     color = WHITE if (row + col) % 2 == 0 else GRAY
                 pygame.draw.rect(self.screen, color, rect)
-                
-        # Dibuja el botón de pasar turno   
-        self.draw_buttons()  
-        
+
+        # Dibuja los botones y el turno actual
+        self.draw_buttons()
+        self.draw_turn_info()
+
     def draw_buttons(self):
         """Dibuja los botones de control."""
         pygame.draw.rect(self.screen, (0, 255, 0), self.pass_turn_button)  # Botón de pasar turno
         pygame.draw.rect(self.screen, (0, 200, 200), self.push_button)  # Botón de empujar
         pygame.draw.rect(self.screen, (200, 200, 0), self.pull_button)  # Botón de jalar
-        
+
         # Añadir texto a los botones
-        font = pygame.font.SysFont(None, 30)
-        self.screen.blit(font.render("Pasar Turno", True, BLACK), (self.pass_turn_button.x + 10, self.pass_turn_button.y + 10))
-        self.screen.blit(font.render("Empujar", True, BLACK), (self.push_button.x + 10, self.push_button.y + 10))
-        self.screen.blit(font.render("Jalar", True, BLACK), (self.pull_button.x + 10, self.pull_button.y + 10))    
+        self.screen.blit(self.font.render("Pasar Turno", True, BLACK), (self.pass_turn_button.x + 10, self.pass_turn_button.y + 10))
+        self.screen.blit(self.font.render("Empujar", True, BLACK), (self.push_button.x + 10, self.push_button.y + 10))
+        self.screen.blit(self.font.render("Jalar", True, BLACK), (self.pull_button.x + 10, self.pull_button.y + 10))
+
+    def draw_turn_info(self):
+        """Dibuja la información del turno actual y movimientos restantes."""
+        current_turn = "Oro" if self.game.current_player == "gold" else "Plata"
+        moves_left = 4 - self.game.steps_taken
+        info_text = f"Turno: {current_turn} | Movimientos restantes: {moves_left}"
+        label = self.font.render(info_text, True, WHITE)
+        self.screen.blit(label, (10, WINDOW_SIZE + 60))
 
     def draw_pieces(self):
         """Dibuja las piezas en el tablero."""
@@ -117,13 +124,12 @@ class ArimaaPygame:
             elif event.type == pygame.MOUSEMOTION:
                 self.handle_mouse_motion(event.pos)
 
-
     def pass_turn(self):
         """Maneja la acción de pasar el turno."""
         print("Pasando el turno...")
         self.game.change_turn(TRAP_POSITIONS)
         self.moves_made = 0  # Restablecer los pasos
-    
+
     def handle_mouse_down(self, position):
         """Maneja el inicio del arrastre."""
         piece = self.game.get_piece_at(position)
@@ -132,7 +138,6 @@ class ArimaaPygame:
             self.selected_piece = position
             self.dragging_piece = True
             self.dragging_path = [position]
-
 
     def handle_mouse_up(self, position):
         """Maneja el fin del arrastre y acciones especiales."""
@@ -155,15 +160,13 @@ class ArimaaPygame:
                     print(f"{self.action_mode.capitalize()} inválido: seleccione correctamente las posiciones.")
             except ValueError as e:
                 print(f"Error: {e}")
-            
+
             # Resetear después de realizar una acción
             if len(self.dragging_path) >= 3 or self.action_mode is None:
                 self.dragging_piece = False
                 self.dragging_path = []
                 self.action_mode = None
 
-
-            
     def handle_push_action(self):
         """Maneja la acción de empujar."""
         if len(self.dragging_path) == 3:
@@ -190,15 +193,13 @@ class ArimaaPygame:
         else:
             print(f"Jalada inválida: seleccione exactamente 3 posiciones. Actualmente: {len(self.dragging_path)}")
 
-
-
     def handle_mouse_motion(self, pos):
         """Maneja el movimiento mientras se arrastra."""
         if self.dragging_piece:
             current_position = self.get_clicked_position(pos)
             if current_position not in self.dragging_path:  # Evitar duplicados
                 self.dragging_path.append(current_position)
-                
+
     def handle_normal_move(self):
         """Maneja un movimiento normal."""
         for i in range(1, len(self.dragging_path)):
@@ -206,7 +207,7 @@ class ArimaaPygame:
             self.moves_made += 1
             if self.game.steps_taken >= 4:
                 self.moves_made = 0
-                self.game.change_turn(TRAP_POSITIONS)            
+                self.game.change_turn(TRAP_POSITIONS)
 
 if __name__ == "__main__":
     gui = ArimaaPygame()
