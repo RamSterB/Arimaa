@@ -1,3 +1,5 @@
+from arimaa_ai import find_best_move
+
 class ArimaaGame:
     def __init__(self):
         self.board = self.initialize_board()
@@ -76,12 +78,32 @@ class ArimaaGame:
 
     def change_turn(self, trap_positions):
         """Cambia el turno al siguiente jugador."""
-        self.current_player = "silver" if self.current_player == "gold" else "gold"
-        self.steps_taken = 0
+        if self.current_player == "gold":
+            self.current_player = "silver"
+            self.steps_taken = 0
 
-        # Validar estado del juego si es necesario
-        self.check_trap_positions(trap_positions)
-        self.check_victory_conditions()
+            # Validar estado del juego si es necesario
+            self.check_trap_positions(trap_positions)
+            self.check_victory_conditions()
+
+            # Movimiento de la IA (fichas de plata)
+            for _ in range(4):
+                best_move = find_best_move(self.board)
+                if best_move:
+                    start, end = best_move
+                    self.move_piece(start, end)
+                    print(f"Plata movió de {start} a {end}")
+
+            # Validar estado del juego después del movimiento de la IA
+            self.check_trap_positions(trap_positions)
+            self.check_victory_conditions()
+        else:
+            self.current_player = "gold"
+            self.steps_taken = 0
+
+            # Validar estado del juego si es necesario
+            self.check_trap_positions(trap_positions)
+            self.check_victory_conditions()
 
     def is_frozen(self, position):
         """Determina si una pieza en una posición está congelada."""
@@ -263,5 +285,9 @@ class ArimaaGame:
 if __name__ == "__main__":
     game = ArimaaGame()
     print("Estado inicial del tablero:")
+    for row in game.get_board_state():
+        print(row)
+    game.make_best_move()
+    print("Estado del tablero después del mejor movimiento de plata:")
     for row in game.get_board_state():
         print(row)
