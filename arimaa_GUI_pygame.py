@@ -77,7 +77,7 @@ class ArimaaPygame:
 
     def draw_turn_info(self):
         """Dibuja la información del turno actual y movimientos restantes."""
-        current_turn = "Oro" if self.game.current_player == "gold" else "Plata"
+        current_turn = "White" if self.game.current_player == "white" else "Black"
         moves_left = 4 - self.game.steps_taken
         info_text = f"Turno: {current_turn} | Movimientos restantes: {moves_left}"
         label = self.font.render(info_text, True, WHITE)
@@ -94,14 +94,6 @@ class ArimaaPygame:
                     piece_image = pygame.image.load(piece_asset)
                     piece_image = pygame.transform.scale(piece_image, (CELL_SIZE, CELL_SIZE))
                     self.screen.blit(piece_image, (col * CELL_SIZE, row * CELL_SIZE))
-
-                    # center_x = col * CELL_SIZE + CELL_SIZE // 2
-                    # center_y = row * CELL_SIZE + CELL_SIZE // 2
-                    # color = GOLD if piece.isupper() else SILVER
-                    # pygame.draw.circle(self.screen, color, (center_x, center_y), CELL_SIZE // 3)
-                    # text = pygame.font.SysFont(None, 40).render(piece, True, BLACK)
-                    # text_rect = text.get_rect(center=(center_x, center_y))
-                    # self.screen.blit(text, text_rect)
 
     def get_clicked_position(self, pos):
         """Devuelve la posición de la celda clicada."""
@@ -156,8 +148,8 @@ class ArimaaPygame:
     def handle_mouse_down(self, position):
         """Maneja el inicio del arrastre."""
         piece = self.game.get_piece_at(position)
-        if piece and (self.game.current_player == "gold" and piece.isupper() or 
-                      self.game.current_player == "silver" and piece.islower()):
+        if piece and (self.game.current_player == "black" and piece.isupper() or 
+                      self.game.current_player == "white" and piece.islower()):
             self.selected_piece = position
             self.dragging_piece = True
             self.dragging_path = [position]
@@ -185,7 +177,7 @@ class ArimaaPygame:
                 print(f"Error: {e}")
 
             # Resetear después de realizar una acción
-            if len(self.dragging_path) >= 3 or self.action_mode is None:
+            if (len(self.dragging_path) >= 3 and self.action_mode) or (self.action_mode is None):
                 self.dragging_piece = False
                 self.dragging_path = []
                 self.action_mode = None

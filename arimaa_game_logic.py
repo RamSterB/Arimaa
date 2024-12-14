@@ -1,9 +1,9 @@
-from arimaa_ai import find_best_move
+from arimaa_ai import ArimaaAI
 
 class ArimaaGame:
     def __init__(self):
         self.board = self.initialize_board()
-        self.current_player = "gold"
+        self.current_player = "white"
         self.steps_taken = 0
         self.piece_weights = {
             "E": 5,  # Elefante
@@ -14,6 +14,7 @@ class ArimaaGame:
             "R": 0,  # Conejo
             "e": 5, "c": 4, "h": 3, "d": 2, "a": 1, "r": 0
         }
+        self.ai = ArimaaAI(self.piece_weights)  # Crear instancia de AI
 
     def initialize_board(self):
         """Inicializa el tablero con las piezas en sus posiciones iniciales."""
@@ -78,14 +79,14 @@ class ArimaaGame:
     def make_best_move(self):
         """Realiza el mejor movimiento usando el algoritmo minimax."""
         for _ in range(4 - self.steps_taken):
-            best_move = find_best_move(self.board)
+            best_move = self.ai.find_best_move(self.board)  # Usar la instancia de AI
             if best_move:
                 start, end = best_move
-                if start != end:  # Validar que el movimiento no deje la pieza en la misma posición
+                if start != end:
                     self.move_piece(start, end)
                     print(f"IA realizó el movimiento de {start} a {end}")
                 else:
-                    print("El mejor movimiento encontrado deja la pieza en la misma posición, buscando otro movimiento.")
+                    print("El mejor movimiento encontrado deja la pieza en la misma posición.")
             else:
                 print("No hay movimientos disponibles para la IA.")
     
@@ -177,7 +178,7 @@ class ArimaaGame:
         """Jala una pieza enemiga hacia la posición anterior del jalador."""
         
         if self.steps_taken + 2 > 4:
-            raise ValueError("Empuje inválido: no se pueden tomar más de 4 pasos en un turno.")
+            raise ValueError("Jalada inválida: no se pueden tomar más de 4 pasos en un turno.")
         
         puller = self.get_piece_at(puller_pos)
         pulled = self.get_piece_at(pulled_pos)
@@ -211,10 +212,10 @@ class ArimaaGame:
 
     def check_victory_conditions(self):
         """Verifica si se han cumplido las condiciones de victoria."""
-        gold_rabbits = 0
-        silver_rabbits = 0
-        gold_has_moves = False
-        silver_has_moves = False
+        black_rabbits = 0
+        white_rabbits = 0
+        black_has_moves = False
+        white_has_moves = False
 
         for row in range(8):
             for col in range(8):
@@ -224,57 +225,57 @@ class ArimaaGame:
 
                 # Verificar conejos en el extremo del tablero
                 if piece == "R":
-                    gold_rabbits += 1
+                    black_rabbits += 1
                     if row == 7:
                         print("¡Oro gana!")
                         self.end_game()
                 elif piece == "r":
-                    silver_rabbits += 1
+                    white_rabbits += 1
                     if row == 0:
                         print("¡Plata gana!")
                         self.end_game()
 
                 # Verificar si la pieza puede moverse (no está congelada)
                 if not self.is_frozen((row, col)):
-                    is_gold = piece.isupper()
+                    is_black = piece.isupper()
                     for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
                         new_row, new_col = row + dr, col + dc
                         if 0 <= new_row < 8 and 0 <= new_col < 8 and self.board[new_row][new_col] is None:
-                            if is_gold:
-                                gold_has_moves = True
+                            if is_black:
+                                black_has_moves = True
                             else:
-                                silver_has_moves = True
+                                white_has_moves = True
 
         # Condición de victoria por eliminación de conejos
-        if gold_rabbits == 0:
+        if black_rabbits == 0:
             print("¡Plata gana! (Oro sin conejos)")
             self.end_game()
-        if silver_rabbits == 0:
+        if white_rabbits == 0:
             print("¡Oro gana! (Plata sin conejos)")
             self.end_game()
 
         # Condición de victoria por inmovilidad
-        if not gold_has_moves:
+        if not black_has_moves:
             print("¡Plata gana! (Oro inmovilizado)")
             self.end_game()
-        if not silver_has_moves:
+        if not white_has_moves:
             print("¡Oro gana! (Plata inmovilizada)")
             self.end_game()      
     
     def change_turn(self, trap_positions):
-        """Cambia el turno y activa la IA para silver."""
-        self.current_player = "silver" if self.current_player == "gold" else "gold"
+        """Cambia el turno y activa la IA para whites."""
+        self.current_player = "black" if self.current_player == "white" else "white"
         self.steps_taken = 0
         
         # Validar estado
         self.check_trap_positions(trap_positions)
         self.check_victory_conditions()
 
-        # Activar IA para silver
-        if self.current_player == "silver":
+        # Activar IA para whites
+        if self.current_player == "black":
             try:
-                self.make_best_move()
-                self.current_player = "gold"
+                self.make_best_move() # IA
+                self.current_player = "white"
                 self.steps_taken = 0
             except Exception as e:
                 print(f"Error en movimiento de IA: {e}")
