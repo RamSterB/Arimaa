@@ -203,18 +203,7 @@ class ArimaaPygame:
                 print(f"Error al jalar: {e}")
         else:
             print(f"Jalada inválida: seleccione exactamente 3 posiciones. Actualmente: {len(self.dragging_path)}")
-        """Maneja la acción de jalar."""
-        if len(self.dragging_path) == 3:
-            puller_pos, pulled_pos, new_pos = self.dragging_path
-            try:
-                self.game.pull_piece(puller_pos, pulled_pos, new_pos)
-                self.moves_made += 2
-                print(f"Jalada exitosa: {puller_pos} jaló {pulled_pos} a {new_pos}")
-            except ValueError as e:
-                print(f"Error al jalar: {e}")
-        else:
-            print(f"Jalada inválida: seleccione exactamente 3 posiciones. Actualmente: {len(self.dragging_path)}")
-
+        
     def handle_mouse_motion(self, pos):
         """Maneja el movimiento mientras se arrastra."""
         if self.dragging_piece:

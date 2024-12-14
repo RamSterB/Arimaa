@@ -81,11 +81,13 @@ class ArimaaGame:
             best_move = find_best_move(self.board)
             if best_move:
                 start, end = best_move
-                self.move_piece(start, end)
-                print(f"IA realizó el movimiento de {start} a {end}")
+                if start != end:  # Validar que el movimiento no deje la pieza en la misma posición
+                    self.move_piece(start, end)
+                    print(f"IA realizó el movimiento de {start} a {end}")
+                else:
+                    print("El mejor movimiento encontrado deja la pieza en la misma posición, buscando otro movimiento.")
             else:
                 print("No hay movimientos disponibles para la IA.")
-
     def is_frozen(self, position):
         """Determina si una pieza en una posición está congelada."""
         row, col = position
