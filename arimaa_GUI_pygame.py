@@ -175,12 +175,31 @@ class ArimaaPygame:
                 self.game.push_piece(pusher_pos, pushed_pos, new_pos)
                 self.moves_made += 2
                 print(f"Empuje exitoso: {pusher_pos} empujó {pushed_pos} a {new_pos}")
+                # Cambiar de turno si los pasos se agotan
+                if self.game.steps_taken >= 4:
+                    print("Pasos agotados, cambiando turno.")
+                    self.pass_turn()
             except ValueError as e:
                 print(f"Error al empujar: {e}")
         else:
             print(f"Empuje inválido: seleccione exactamente 3 posiciones. Actualmente: {len(self.dragging_path)}")
 
     def handle_pull_action(self):
+        """Maneja la acción de jalar."""
+        if len(self.dragging_path) == 3:
+            puller_pos, pulled_pos, new_pos = self.dragging_path
+            try:
+                self.game.pull_piece(puller_pos, pulled_pos, new_pos)
+                self.moves_made += 2
+                print(f"Jalada exitosa: {puller_pos} jaló {pulled_pos} a {new_pos}")
+                # Cambiar de turno si los pasos se agotan
+                if self.game.steps_taken >= 4:
+                    print("Pasos agotados, cambiando turno.")
+                    self.pass_turn()
+            except ValueError as e:
+                print(f"Error al jalar: {e}")
+        else:
+            print(f"Jalada inválida: seleccione exactamente 3 posiciones. Actualmente: {len(self.dragging_path)}")
         """Maneja la acción de jalar."""
         if len(self.dragging_path) == 3:
             puller_pos, pulled_pos, new_pos = self.dragging_path
