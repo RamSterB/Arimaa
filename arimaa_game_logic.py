@@ -88,6 +88,7 @@ class ArimaaGame:
                     print("El mejor movimiento encontrado deja la pieza en la misma posición, buscando otro movimiento.")
             else:
                 print("No hay movimientos disponibles para la IA.")
+    
     def is_frozen(self, position):
         """Determina si una pieza en una posición está congelada."""
         row, col = position

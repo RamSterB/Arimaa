@@ -7,9 +7,10 @@ CELL_SIZE = WINDOW_SIZE // 8
 
 # Colores
 WHITE = (255, 255, 255)
-GRAY = (169, 169, 169)
+BROWN2 = (108,59,42)
+BROWN = (161, 130, 98)
 RED = (255, 0, 0)
-BLACK = (0, 0, 0)
+BLACK = (28, 13, 2)
 GOLD = (255, 215, 0)
 SILVER = (192, 192, 192)
 
@@ -33,6 +34,20 @@ class ArimaaPygame:
         self.push_button = pygame.Rect(10, WINDOW_SIZE + 10, 140, 40)
         self.pull_button = pygame.Rect(160, WINDOW_SIZE + 10, 140, 40)
         self.action_mode = None  # 'push', 'pull', o None para movimientos normales
+        self.piece_assets = {
+            "E": "assets/black/elephant-head.png",
+            "C": "assets/black/cat.png",
+            "H": "assets/black/horse-head.png",
+            "D": "assets/black/hound.png",
+            "A": "assets/black/camel-head.png",
+            "R": "assets/black/rabbit.png",
+            "e": "assets/white/elephant-head.png",
+            "c": "assets/white/cat.png",
+            "h": "assets/white/horse-head.png",
+            "d": "assets/white/hound.png",
+            "a": "assets/white/camel-head.png",
+            "r": "assets/white/rabbit.png"
+        }
 
     def draw_board(self):
         """Dibuja el tablero de juego."""
@@ -40,9 +55,9 @@ class ArimaaPygame:
             for col in range(8):
                 rect = pygame.Rect(col * CELL_SIZE, row * CELL_SIZE, CELL_SIZE, CELL_SIZE)
                 if (row, col) in TRAP_POSITIONS:
-                    color = RED
+                    color = BLACK
                 else:
-                    color = WHITE if (row + col) % 2 == 0 else GRAY
+                    color = BROWN if (row + col) % 2 == 0 else BROWN2
                 pygame.draw.rect(self.screen, color, rect)
 
         # Dibuja los botones y el turno actual
@@ -75,13 +90,18 @@ class ArimaaPygame:
             for col in range(8):
                 piece = board[row][col]
                 if piece:
-                    center_x = col * CELL_SIZE + CELL_SIZE // 2
-                    center_y = row * CELL_SIZE + CELL_SIZE // 2
-                    color = GOLD if piece.isupper() else SILVER
-                    pygame.draw.circle(self.screen, color, (center_x, center_y), CELL_SIZE // 3)
-                    text = pygame.font.SysFont(None, 40).render(piece, True, BLACK)
-                    text_rect = text.get_rect(center=(center_x, center_y))
-                    self.screen.blit(text, text_rect)
+                    piece_asset = self.piece_assets[piece]
+                    piece_image = pygame.image.load(piece_asset)
+                    piece_image = pygame.transform.scale(piece_image, (CELL_SIZE, CELL_SIZE))
+                    self.screen.blit(piece_image, (col * CELL_SIZE, row * CELL_SIZE))
+
+                    # center_x = col * CELL_SIZE + CELL_SIZE // 2
+                    # center_y = row * CELL_SIZE + CELL_SIZE // 2
+                    # color = GOLD if piece.isupper() else SILVER
+                    # pygame.draw.circle(self.screen, color, (center_x, center_y), CELL_SIZE // 3)
+                    # text = pygame.font.SysFont(None, 40).render(piece, True, BLACK)
+                    # text_rect = text.get_rect(center=(center_x, center_y))
+                    # self.screen.blit(text, text_rect)
 
     def get_clicked_position(self, pos):
         """Devuelve la posición de la celda clicada."""
