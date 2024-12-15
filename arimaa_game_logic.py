@@ -17,6 +17,7 @@ class ArimaaGame:
             "R": 0,  # Conejo
             "e": 5, "a": 4, "h": 3, "d": 2, "c": 1, "r": 0
         }
+        self.trap_positions = [(2, 2), (2, 5), (5, 2), (5, 5)]
 
     def initialize_board(self):
         """Inicializa el tablero con las piezas en sus posiciones iniciales."""
@@ -88,6 +89,7 @@ class ArimaaGame:
                     start, end = best_move
                     if start != end:
                         self.move_piece(start, end)
+                        self.check_trap_positions(self.trap_positions)
                         print(f"IA realizó el movimiento de {start} a {end}")
                         # Actualiza el tablero
                         if self.gui:
@@ -220,7 +222,6 @@ class ArimaaGame:
         self.steps_taken = 0
         
         # Validar estado
-        self.check_trap_positions(trap_positions)
         self.check_victory_conditions()
 
         # Activar IA para whites
