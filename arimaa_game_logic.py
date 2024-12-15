@@ -81,15 +81,26 @@ class ArimaaGame:
         for _ in range(4 - self.steps_taken):
             best_move = find_best_move(self.board, self.current_player)
             if best_move:
-                start, end = best_move
-                if start != end:
-                    self.move_piece(start, end)
-                    print(f"IA realizó el movimiento de {start} a {end}")
+                if len(best_move) == 2:
+                    # Movimiento simple
+                    start, end = best_move
+                    if start != end:
+                        self.move_piece(start, end)
+                        print(f"IA realizó el movimiento de {start} a {end}")
+                elif len(best_move) == 4:
+                    # Movimiento de empuje/jalón
+                    move_type, origin, affected, destination = best_move
+                    if move_type == "push":
+                        self.push_piece(origin, affected, destination)
+                        print(f"IA realizó empuje desde {origin} a {destination}")
+                    elif move_type == "pull":
+                        self.pull_piece(origin, affected, destination)
+                        print(f"IA realizó jalón desde {origin} a {destination}")
                 else:
-                    print("El mejor movimiento encontrado deja la pieza en la misma posición.")
+                    print("El mejor movimiento encontrado no es válido.")
             else:
                 print("No hay movimientos disponibles para la IA.")
-    
+        
     def is_frozen(self, position):
         return is_frozen(self.board, position)
 

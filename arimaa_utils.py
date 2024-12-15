@@ -32,8 +32,8 @@ def is_enemy(piece, other):
 
 def get_piece_strength(piece):
     """Devuelve la fuerza de una pieza según las reglas de Arimaa."""
-    strength_order = {"E": 6, "C": 5, "H": 4, "D": 3, "A": 2, "R": 1,
-                      "e": 6, "c": 5, "h": 4, "d": 3, "a": 2, "r": 1}
+    strength_order = {"E": 5, "C": 1, "H": 3, "D": 2, "A": 4, "R": 0,
+                      "e": 5, "c": 1, "h": 3, "d": 2, "a": 4, "r": 0}
     return strength_order.get(piece.upper(), 0)
 
 def push_piece(board, pusher_pos, pushed_pos, new_pos):
