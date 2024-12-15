@@ -77,11 +77,30 @@ def generate_push_pull_moves(board, position, piece):
 def evaluar_push_pull(board, origin, destination):
     score = 0
     traps = [(2,2), (2,5), (5,2), (5,5)]
+    
+    # Verificar si el destino es una trampa
+    if destination in traps:
+        # Simular el estado después del empuje
+        has_support = False
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            adj_row, adj_col = destination[0] + dr, destination[1] + dc
+            if 0 <= adj_row < 8 and 0 <= adj_col < 8:
+                adj_piece = board[adj_row][adj_col]
+                if adj_piece and adj_piece.islower() == board[origin[0]][origin[1]].islower():
+                    has_support = True
+                    break
+        
+        # Si la pieza no tendrá apoyo en la trampa, aumentar significativamente el puntaje
+        if not has_support:
+            score += 20  # Mayor prioridad a movimientos que eliminan piezas
+    
+    # Mantener la evaluación existente
     for trap in traps:
         if manhattan_distance(destination, trap) < manhattan_distance(origin, trap):
-            score += 3
+            score += 5
     if 2 <= destination[0] <= 5 and 2 <= destination[1] <= 5:
         score += 2
+        
     return score
 
 def manhattan_distance(pos1, pos2):
@@ -144,7 +163,7 @@ def find_best_move(board, player):
 
     for move in moves:
         new_board = apply_move(board, move)
-        move_value = minimax(new_board, 2, player == "white")
+        move_value = minimax(new_board, 3, player == "white")
         if (player == "black" and move_value > best_value) or (player == "white" and move_value < best_value):
             best_value = move_value
             best_move = move
