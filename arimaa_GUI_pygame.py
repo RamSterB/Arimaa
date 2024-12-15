@@ -34,6 +34,7 @@ class ArimaaPygame:
         self.push_button = pygame.Rect(10, WINDOW_SIZE + 10, 140, 40)
         self.pull_button = pygame.Rect(160, WINDOW_SIZE + 10, 140, 40)
         self.action_mode = None  # 'push', 'pull', o None para movimientos normales
+        # Cargar imágenes de las piezas
         self.piece_assets = {
             "E": "assets/black/elephant-head.png",
             "C": "assets/black/cat.png",
@@ -48,6 +49,7 @@ class ArimaaPygame:
             "a": "assets/white/camel-head.png",
             "r": "assets/white/rabbit.png"
         }
+        self.game = ArimaaGame(gui=self) 
 
     def draw_board(self):
         """Dibuja el tablero de juego."""
@@ -102,28 +104,19 @@ class ArimaaPygame:
         row = y // CELL_SIZE
         return row, col
 
-    def run(self):
-        """Bucle principal del juego."""
-        while self.running:
-            self.handle_events()
-            self.screen.fill(BLACK)
-            self.draw_board()
-            self.draw_pieces()
-            pygame.display.flip()
-
     def handle_events(self):
         """Maneja los eventos de entrada del usuario."""
         for event in pygame.event.get():
-            if event.type == pygame.QUIT:
+            if event.type == pygame.QUIT: # Salir del juego
                 self.running = False
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                if self.pass_turn_button.collidepoint(event.pos):
+                if self.pass_turn_button.collidepoint(event.pos): # Pasar turno
                     self.pass_turn()
-                elif self.push_button.collidepoint(event.pos):
+                elif self.push_button.collidepoint(event.pos): # Cambiar a modo empujar
                     self.action_mode = 'push'
                     self.dragging_path = []  # Limpiar cualquier selección anterior
                     print("Modo: Empujar activado")
-                elif self.pull_button.collidepoint(event.pos):
+                elif self.pull_button.collidepoint(event.pos): # Cambiar a modo jalar
                     self.action_mode = 'pull'
                     self.dragging_path = []  # Limpiar cualquier selección anterior
                     print("Modo: Jalar activado")
@@ -182,6 +175,22 @@ class ArimaaPygame:
                 self.dragging_path = []
                 self.action_mode = None 
 
+    def handle_mouse_motion(self, pos):
+        """Maneja el movimiento mientras se arrastra."""
+        if self.dragging_piece:
+            current_position = self.get_clicked_position(pos)
+            if current_position not in self.dragging_path:  # Evitar duplicados
+                self.dragging_path.append(current_position)
+
+    def handle_normal_move(self):
+        """Maneja un movimiento normal."""
+        for i in range(1, len(self.dragging_path)):
+            self.game.move_piece(self.dragging_path[i - 1], self.dragging_path[i])
+            self.moves_made += 1
+            if self.game.steps_taken >= 4:
+                self.moves_made = 0
+                self.game.change_turn(TRAP_POSITIONS)
+
     def handle_push_action(self):
         """Maneja la acción de empujar."""
         if len(self.dragging_path) == 3:
@@ -216,21 +225,15 @@ class ArimaaPygame:
         else:
             print(f"Jalada inválida: seleccione exactamente 3 posiciones. Actualmente: {len(self.dragging_path)}")
         
-    def handle_mouse_motion(self, pos):
-        """Maneja el movimiento mientras se arrastra."""
-        if self.dragging_piece:
-            current_position = self.get_clicked_position(pos)
-            if current_position not in self.dragging_path:  # Evitar duplicados
-                self.dragging_path.append(current_position)
 
-    def handle_normal_move(self):
-        """Maneja un movimiento normal."""
-        for i in range(1, len(self.dragging_path)):
-            self.game.move_piece(self.dragging_path[i - 1], self.dragging_path[i])
-            self.moves_made += 1
-            if self.game.steps_taken >= 4:
-                self.moves_made = 0
-                self.game.change_turn(TRAP_POSITIONS)
+    def run(self):
+        """Bucle principal del juego."""
+        while self.running:
+            self.handle_events()
+            self.screen.fill(BLACK)
+            self.draw_board()
+            self.draw_pieces()
+            pygame.display.flip()
 
 if __name__ == "__main__":
     gui = ArimaaPygame()

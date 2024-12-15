@@ -1,11 +1,13 @@
 from arimaa_ai import find_best_move
 from arimaa_utils import is_frozen, pull_piece, push_piece
+import pygame
 
 class ArimaaGame:
-    def __init__(self):
+    def __init__(self, gui=None):
         self.board = self.initialize_board()
         self.current_player = "white"
         self.steps_taken = 0
+        self.gui = gui  # Referencia a la GUI
         self.piece_weights = {
             "E": 5,  # Elefante
             "A": 4,  # Camello
@@ -87,15 +89,30 @@ class ArimaaGame:
                     if start != end:
                         self.move_piece(start, end)
                         print(f"IA realizó el movimiento de {start} a {end}")
+                        # Actualiza el tablero
+                        if self.gui:
+                            self.gui.draw_board()
+                            self.gui.draw_pieces()
+                            pygame.display.flip()
                 elif len(best_move) == 4:
                     # Movimiento de empuje/jalón
                     move_type, origin, affected, destination = best_move
                     if move_type == "push":
                         self.push_piece(origin, affected, destination)
                         print(f"IA realizó empuje desde {origin} a {destination}")
+                        # Actualiza el tablero
+                        if self.gui:
+                            self.gui.draw_board()
+                            self.gui.draw_pieces()
+                            pygame.display.flip()
                     elif move_type == "pull":
                         self.pull_piece(origin, affected, destination)
                         print(f"IA realizó jalón desde {origin} a {destination}")
+                        # Actualiza el tablero
+                        if self.gui:
+                            self.gui.draw_board()
+                            self.gui.draw_pieces()
+                            pygame.display.flip()
                 else:
                     print("El mejor movimiento encontrado no es válido.")
             else:
