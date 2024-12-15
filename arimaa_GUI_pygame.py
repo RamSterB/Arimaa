@@ -48,6 +48,7 @@ class ArimaaPygame:
             "a": "assets/white/camel-head.png",
             "r": "assets/white/rabbit.png"
         }
+        self.game = ArimaaGame(gui=self) 
 
     def draw_board(self):
         """Dibuja el tablero de juego."""
