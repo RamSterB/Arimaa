@@ -2,6 +2,7 @@
 from arimaa_utils import is_frozen, is_enemy, get_piece_strength, push_piece, pull_piece
 
 def evaluate_board(board):
+
     piece_values = {
         "E": 5, "C": 4, "H": 3, "D": 2, "A": 1, "R": 0,  # Oro (mayúsculas)
         "e": -5, "c": -4, "h": -3, "d": -2, "a": -1, "r": 0  # Plata (minúsculas)
@@ -20,14 +21,45 @@ def evaluate_board(board):
                     distance_to_goal = (
                         gold_goal_row - row_idx if piece.isupper() else row_idx - silver_goal_row
                     )
-                    piece_value += 7 - distance_to_goal
-                if (row_idx, col_idx) in trap_positions:
-                    piece_value -= 2
+                    value += 7 - distance_to_goal
+
+                if (row_idx, col_idx) in trap_positions and board[row_idx][col_idx] is not None:
+                    print("Pieza en trampa")
+                    # Direcciones adyacentes
+                    adjacent_positions = [
+                        (row_idx-1, col_idx),  # arriba
+                        (row_idx+1, col_idx),  # abajo
+                        (row_idx, col_idx-1),  # izquierda
+                        (row_idx, col_idx+1)   # derecha
+                    ]
+                    
+                    has_friendly_adjacent = False
+                    for adj_pos in adjacent_positions:
+                        adj_row, adj_col = adj_pos
+                        # Verificar que la posición está dentro del tablero
+                        if 0 <= adj_row < 8 and 0 <= adj_col < 8:
+                            # Verificar si hay una pieza aliada en posición adyacente
+                            if board[adj_row][adj_col] is not None and board[adj_row][adj_col].islower() and board[row_idx][col_idx].islower():
+                                has_friendly_adjacent = True
+                                break
+                            if board[adj_row][adj_col] is not None and board[adj_row][adj_col].isupper() and board[row_idx][col_idx].isupper():
+                                has_friendly_adjacent = True
+                                break
+                    
+                    # Bonificar si no hay piezas enemigas adyacentes
+                    if not has_friendly_adjacent and board[row_idx][col_idx].islower():
+                        value += 20
+                        piece_value = 0   
+                    # Penalizar si no hay piezas aliadas adyacentes
+                    if not has_friendly_adjacent and board[row_idx][col_idx].isupper():
+                        value -= 10
+                        piece_value = 0   
+
                 value += piece_value
 
     mobility_gold = len(generate_moves(board, "black"))
     mobility_silver = len(generate_moves(board, "white"))
-    value += (mobility_gold - mobility_silver) * 0.1
+    value += (mobility_gold - mobility_silver) * 0.4
     return value
 
 def generate_moves(board, player):
@@ -40,6 +72,12 @@ def generate_moves(board, player):
                           (player == "black" and piece.isupper())):
                 if not is_frozen(board, (row, col)):
                     for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                        # Verificar movimiento de conejos
+                        if (piece.lower() == 'r' and 
+                            ((player == "white" and dr == 1) or  # Conejo blanco no va hacia abajo
+                             (player == "black" and dr == -1))): # Conejo negro no va hacia arriba
+                            continue
+                            
                         new_row, new_col = row + dr, col + dc
                         if (0 <= new_row < 8 and 0 <= new_col < 8 and 
                             board[new_row][new_col] is None):
@@ -140,7 +178,6 @@ def minimax(board, depth, is_maximizing_player, alpha=float('-inf'), beta=float(
         return evaluate_board(board)
 
     moves = generate_moves(board, "black" if is_maximizing_player else "white")
-    moves = sorted(moves, key=lambda m: evaluar_movimiento(board, m), reverse=is_maximizing_player)
 
     if is_maximizing_player:
         max_eval = float('-inf')
@@ -174,11 +211,12 @@ def find_best_move(board, player):
     best_move = None
     best_value = float('-inf') if player == "black" else float('inf')
     moves = generate_moves(board, player)
-    moves = sorted(moves, key=lambda m: evaluar_movimiento(board, m), reverse=(player == "black"))
+    print(moves)
 
     for move in moves:
         new_board = apply_move(board, move)
         move_value = minimax(new_board, 2, player == "white")
+        print(move, move_value)
         if (player == "black" and move_value > best_value) or (player == "white" and move_value < best_value):
             best_value = move_value
             best_move = move

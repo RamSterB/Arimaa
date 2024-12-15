@@ -36,6 +36,16 @@ def get_piece_strength(piece):
                       "e": 5, "c": 1, "h": 3, "d": 2, "a": 4, "r": 0}
     return strength_order.get(piece.upper(), 0)
 
+def piece_is_stronger(piece1, piece2):
+    # Jerarquía de piezas (de más fuerte a más débil)
+    hierarchy = {
+        'E': 6, 'M': 5, 'H': 4, 'D': 3, 'C': 2, 'R': 1,
+        'e': 6, 'm': 5, 'h': 4, 'd': 3, 'c': 2, 'r': 1
+    }
+    
+    # Comparar la fuerza de las piezas usando la jerarquía
+    return hierarchy[piece1] > hierarchy[piece2]
+
 def push_piece(board, pusher_pos, pushed_pos, new_pos):
     """Empuja una pieza enemiga a una nueva posición."""
     # Obtener las piezas
