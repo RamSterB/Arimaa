@@ -168,7 +168,8 @@ class ArimaaPygame:
                     print(f"{self.action_mode.capitalize()} inválido: seleccione correctamente las posiciones.")
             except ValueError as e:
                 print(f"Error: {e}")
-
+            # Verificar si las piezas están en las trampas
+            self.game.check_trap_positions(TRAP_POSITIONS)
             # Resetear después de realizar una acción
             if len(self.dragging_path) >= 3 or self.action_mode is None:
                 self.dragging_piece = False
