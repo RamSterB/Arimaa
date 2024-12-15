@@ -232,6 +232,9 @@ class ArimaaGame:
                 self.steps_taken = 0
             except Exception as e:
                  print(f"Error en movimiento de IA: {e}")
+                 if e.args[0] == "Se han tomado demasiados pasos en este turno." or e.args[0] == "Jalada inválida: no se pueden tomar más de 4 pasos en un turno." or e.args[0] == "Empuje inválido: no se pueden tomar más de 4 pasos en un turno.":
+                     self.change_turn(trap_positions)
+                     print("Se cambió el turno debido a un error en la IA.")
 
     def end_game(self):
         """Finaliza el juego."""
