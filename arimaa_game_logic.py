@@ -1,5 +1,5 @@
 from arimaa_ai import find_best_move
-from arimaa_utils import is_frozen, piece_weights
+from arimaa_utils import is_frozen, pull_piece, push_piece
 
 class ArimaaGame:
     def __init__(self):
@@ -79,7 +79,7 @@ class ArimaaGame:
     def make_best_move(self):
         """Realiza el mejor movimiento usando el algoritmo minimax."""
         for _ in range(4 - self.steps_taken):
-            best_move = find_best_move(self.board)  # Usar la instancia de AI
+            best_move = find_best_move(self.board, self.current_player)
             if best_move:
                 start, end = best_move
                 if start != end:
@@ -121,70 +121,18 @@ class ArimaaGame:
         if self.steps_taken + 2 > 4:
             raise ValueError("Empuje inválido: no se pueden tomar más de 4 pasos en un turno.")
         
-        pusher = self.get_piece_at(pusher_pos)
-        pushed = self.get_piece_at(pushed_pos)
-
-        # Validar que ambas piezas existen
-        if not pusher or not pushed:
-            raise ValueError("Empuje inválido: falta una pieza.")
-
-        # El empujador debe ser más fuerte que la pieza empujada
-        if self.piece_weights[pusher] <= self.piece_weights[pushed]:
-            raise ValueError("Empuje inválido: el empujador debe ser más fuerte que la pieza empujada.")
-
-        # La nueva posición debe estar vacía
-        if self.board[new_pos[0]][new_pos[1]] is not None:
-            raise ValueError("Empuje inválido: la nueva posición debe estar vacía.")
-
-        # Validar que las posiciones son adyacentes
-        if abs(pusher_pos[0] - pushed_pos[0]) + abs(pusher_pos[1] - pushed_pos[1]) != 1:
-            raise ValueError("Empuje inválido: el empujador no está adyacente a la pieza empujada.")
-        if abs(pushed_pos[0] - new_pos[0]) + abs(pushed_pos[1] - new_pos[1]) != 1:
-            raise ValueError("Empuje inválido: la nueva posición no está adyacente a la pieza empujada.")
-            
-        
-        # Realizar el empuje
-        self.board[pusher_pos[0]][pusher_pos[1]] = None  # El empujador deja su posición
-        self.board[new_pos[0]][new_pos[1]] = pushed     # La pieza empujada se mueve
-        self.board[pushed_pos[0]][pushed_pos[1]] = pusher  # El empujador toma el lugar de la pieza empujada
+        new_board = push_piece(self.board, pusher_pos, pushed_pos, new_pos)
+        self.board = new_board
         self.steps_taken += 2
-
 
     def pull_piece(self, puller_pos, pulled_pos, new_pos):
         """Jala una pieza enemiga hacia la posición anterior del jalador."""
-        
         if self.steps_taken + 2 > 4:
             raise ValueError("Jalada inválida: no se pueden tomar más de 4 pasos en un turno.")
         
-        puller = self.get_piece_at(puller_pos)
-        pulled = self.get_piece_at(pulled_pos)
-
-        # Validar que ambas piezas existen
-        if not puller or not pulled:
-            raise ValueError("Jalada inválida: falta una pieza.")
-
-        # El jalador debe ser más fuerte que la pieza jalada
-        if self.piece_weights[puller] <= self.piece_weights[pulled]:
-            raise ValueError("Jalada inválida: el jalador debe ser más fuerte que la pieza jalada.")
-
-        # La nueva posición debe estar vacía
-        if self.board[new_pos[0]][new_pos[1]] is not None:
-            raise ValueError("Jalada inválida: la nueva posición debe estar vacía.")
-
-        # Validar que las posiciones son adyacentes
-        if abs(puller_pos[0] - pulled_pos[0]) + abs(puller_pos[1] - pulled_pos[1]) != 1:
-            raise ValueError("Jalada inválida: el jalador no está adyacente a la pieza jalada.")
-        if abs(puller_pos[0] - new_pos[0]) + abs(puller_pos[1] - new_pos[1]) != 1:
-            raise ValueError("Jalada inválida: la nueva posición no está adyacente al jalador.")
-
-        # Realizar la jalada
-        self.board[puller_pos[0]][puller_pos[1]] = None  # El jalador deja su posición
-        self.board[pulled_pos[0]][pulled_pos[1]] = None  # La pieza jalada deja su posición original
-        self.board[new_pos[0]][new_pos[1]] = puller     # El jalador se mueve a la nueva posición
-        self.board[puller_pos[0]][puller_pos[1]] = pulled  # La pieza jalada toma el lugar del jalador
+        new_board = pull_piece(self.board, puller_pos, pulled_pos, new_pos)
+        self.board = new_board
         self.steps_taken += 2
-
-
 
     def check_victory_conditions(self):
         """Verifica si se han cumplido las condiciones de victoria."""
@@ -254,7 +202,7 @@ class ArimaaGame:
                 self.current_player = "white"
                 self.steps_taken = 0
             except Exception as e:
-                print(f"Error en movimiento de IA: {e}")
+                 print(f"Error en movimiento de IA: {e}")
 
     def end_game(self):
         """Finaliza el juego."""

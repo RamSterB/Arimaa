@@ -177,10 +177,10 @@ class ArimaaPygame:
                 print(f"Error: {e}")
 
             # Resetear después de realizar una acción
-            if (len(self.dragging_path) >= 3 and self.action_mode) or (self.action_mode is None):
+            if len(self.dragging_path) >= 3 or self.action_mode is None:
                 self.dragging_piece = False
                 self.dragging_path = []
-                self.action_mode = None
+                self.action_mode = None 
 
     def handle_push_action(self):
         """Maneja la acción de empujar."""
