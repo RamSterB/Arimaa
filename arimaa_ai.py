@@ -217,12 +217,6 @@ def minimax(board, depth, is_maximizing_player, alpha=float('-inf'), beta=float(
                 break
         return min_eval
 
-def evaluar_movimiento(board, move):
-    if len(move) == 2:
-        return evaluate_board(apply_move(board, move))
-    elif len(move) == 4:
-        _, origin, _, destination = move
-        return evaluar_push_pull(board, origin, destination)
 
 def find_best_move(board, player):
     best_move = None
