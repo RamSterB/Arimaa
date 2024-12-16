@@ -4,27 +4,27 @@ from arimaa_utils import is_frozen, is_enemy, get_piece_strength, push_piece, pu
 def evaluate_board(board):
 
     piece_values = {
-        "E": 5, "C": 4, "H": 3, "D": 2, "A": 1, "R": 0,  # Oro (mayúsculas)
-        "e": -5, "c": -4, "h": -3, "d": -2, "a": -1, "r": 0  # Plata (minúsculas)
+        "E": 5, "C": 1, "H": 3, "D": 2, "A": 4, "R": 0,  # Oro (mayúsculas)
+        "e": -5, "c": -1, "h": -3, "d": -2, "a": -4, "r": 0  # Plata (minúsculas)
     }
     
     trap_positions = [(2, 2), (2, 5), (5, 2), (5, 5)]
-    gold_goal_row = 7
-    silver_goal_row = 0
+    black_goal_row = 7
+    white_goal_row = 0
 
     value = 0
     for row_idx, row in enumerate(board):
         for col_idx, piece in enumerate(row):
             if piece in piece_values:
-                piece_value = piece_values[piece]
-                if piece.lower() == "r":
+                
+                if piece.upper() == "R":
                     distance_to_goal = (
-                        gold_goal_row - row_idx if piece.isupper() else row_idx - silver_goal_row
+                        black_goal_row - row_idx if piece.isupper() else row_idx - white_goal_row
                     )
                     value += 7 - distance_to_goal
 
                 if (row_idx, col_idx) in trap_positions and board[row_idx][col_idx] is not None:
-                    print("Pieza en trampa")
+                   
                     # Direcciones adyacentes
                     adjacent_positions = [
                         (row_idx-1, col_idx),  # arriba
@@ -49,21 +49,32 @@ def evaluate_board(board):
                     # Bonificar si no hay piezas enemigas adyacentes
                     if not has_friendly_adjacent and board[row_idx][col_idx].islower():
                         value += 20
-                        piece_value = 0   
                     # Penalizar si no hay piezas aliadas adyacentes
                     if not has_friendly_adjacent and board[row_idx][col_idx].isupper():
                         value -= 10
-                        piece_value = 0   
 
-                value += piece_value
+    mobility_black = len(generate_moves(board, "black"))
+    mobility_white = len(generate_moves(board, "white"))
+    value += (mobility_black - mobility_white) * 0.4
 
-    mobility_gold = len(generate_moves(board, "black"))
-    mobility_silver = len(generate_moves(board, "white"))
-    value += (mobility_gold - mobility_silver) * 0.4
     return value
+
+def has_adjacent_ally(board, trap_pos, player):
+    row, col = trap_pos
+    for dr, dc in [(-1,0), (1,0), (0,-1), (0,1)]:
+        adj_row, adj_col = row + dr, col + dc
+        if 0 <= adj_row < 8 and 0 <= adj_col < 8:
+            piece = board[adj_row][adj_col]
+            if piece:
+                if player == "white" and piece.islower():
+                    return True
+                if player == "black" and piece.isupper():
+                    return True
+    return False
 
 def generate_moves(board, player):
     moves = []
+    traps = [(2,2), (2,5), (5,2), (5,5)]
 
     for row in range(8):
         for col in range(8):
@@ -72,16 +83,21 @@ def generate_moves(board, player):
                           (player == "black" and piece.isupper())):
                 if not is_frozen(board, (row, col)):
                     for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-                        # Verificar movimiento de conejos
                         if (piece.lower() == 'r' and 
-                            ((player == "white" and dr == 1) or  # Conejo blanco no va hacia abajo
-                             (player == "black" and dr == -1))): # Conejo negro no va hacia arriba
+                            ((player == "white" and dr == 1) or  
+                             (player == "black" and dr == -1))): 
                             continue
                             
                         new_row, new_col = row + dr, col + dc
                         if (0 <= new_row < 8 and 0 <= new_col < 8 and 
                             board[new_row][new_col] is None):
-                            moves.append(((row, col), (new_row, new_col)))
+                            # Verificar si el movimiento es hacia una trampa
+                            if (new_row, new_col) in traps:
+                                # Solo añadir el movimiento si hay un aliado adyacente
+                                if has_adjacent_ally(board, (new_row, new_col), player):
+                                    moves.append(((row, col), (new_row, new_col)))
+                            else:
+                                moves.append(((row, col), (new_row, new_col)))
                     moves.extend(generate_push_pull_moves(board, (row, col), piece))
     return moves
 
@@ -184,6 +200,7 @@ def minimax(board, depth, is_maximizing_player, alpha=float('-inf'), beta=float(
         for move in moves:
             new_board = apply_move(board, move)
             eval = minimax(new_board, depth - 1, False, alpha, beta)
+            print(move, eval)
             max_eval = max(max_eval, eval)
             alpha = max(alpha, eval)
             if beta <= alpha:
@@ -195,6 +212,7 @@ def minimax(board, depth, is_maximizing_player, alpha=float('-inf'), beta=float(
             new_board = apply_move(board, move)
             eval = minimax(new_board, depth - 1, True, alpha, beta)
             min_eval = min(min_eval, eval)
+            print(move, eval)
             beta = min(beta, eval)
             if beta <= alpha:
                 break
@@ -216,8 +234,8 @@ def find_best_move(board, player):
     for move in moves:
         new_board = apply_move(board, move)
         move_value = minimax(new_board, 2, player == "white")
-        print(move, move_value)
-        if (player == "black" and move_value > best_value) or (player == "white" and move_value < best_value):
+        #print(move, move_value)
+        if (player == "black" and move_value >= best_value) or (player == "white" and move_value <= best_value):
             best_value = move_value
             best_move = move
     return best_move
