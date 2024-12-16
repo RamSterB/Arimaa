@@ -4,8 +4,8 @@ from arimaa_utils import is_frozen, is_enemy, get_piece_strength, push_piece, pu
 def evaluate_board(board):
 
     piece_values = {
-        "E": 5, "C": 1, "H": 3, "D": 2, "A": 4, "R": 0,  # Oro (mayúsculas)
-        "e": -5, "c": -1, "h": -3, "d": -2, "a": -4, "r": 0  # Plata (minúsculas)
+        "E": 5, "C": 1, "H": 3, "D": 2, "A": 4, "R": 0,  # Black (mayúsculas)
+        "e": -5, "c": -1, "h": -3, "d": -2, "a": -4, "r": 0  # White (minúsculas)
     }
     
     trap_positions = [(2, 2), (2, 5), (5, 2), (5, 5)]
@@ -59,11 +59,12 @@ def evaluate_board(board):
 
     return value
 
-def has_adjacent_ally(board, new_pos, player):
+def has_adjacent_ally(board, current_pos, new_pos, player):
+    current_row, current_col = current_pos
     row, col = new_pos
     for dr, dc in [(-1,0), (1,0), (0,-1), (0,1)]:
         adj_row, adj_col = row + dr, col + dc
-        if 0 <= adj_row < 8 and 0 <= adj_col < 8:
+        if 0 <= adj_row < 8 and 0 <= adj_col < 8 and adj_row != current_row and adj_col != current_col:
             piece = board[adj_row][adj_col]
             if piece:
                 if player == "white" and piece.islower():        
@@ -94,7 +95,7 @@ def generate_moves(board, player):
                             # Verificar si el movimiento es hacia una trampa
                             if (new_row, new_col) in traps:
                                 # Solo añadir el movimiento si hay un aliado adyacente
-                                if has_adjacent_ally(board, (new_row, new_col), player):
+                                if has_adjacent_ally(board,(row, col), (new_row, new_col), player):
                                     moves.append(((row, col), (new_row, new_col)))
                             else:
                                 moves.append(((row, col), (new_row, new_col)))

@@ -22,10 +22,10 @@ class ArimaaGame:
     def initialize_board(self):
         """Inicializa el tablero con las piezas en sus posiciones iniciales."""
         board = [[None for _ in range(8)] for _ in range(8)]
-        # Configuración inicial del oro
+        # Configuración inicial del Black
         board[1] = ["C", "D", "H", "A", "E", "H", "D", "C"]
         board[0] = ["R"] * 8
-        # Configuración inicial de la plata
+        # Configuración inicial de la White
         board[7] = ["r"] * 8
         board[6] = ["c", "d", "h", "a", "e", "h", "d", "c"]
         return board
@@ -187,12 +187,12 @@ class ArimaaGame:
                 if piece == "R":
                     black_rabbits += 1
                     if row == 7:
-                        print("¡Oro gana!")
+                        print("¡Black win!")
                         self.end_game()
                 elif piece == "r":
                     white_rabbits += 1
                     if row == 0:
-                        print("¡Plata gana!")
+                        print("¡White win!")
                         self.end_game()
 
                 # Verificar si la pieza puede moverse (no está congelada)
@@ -208,18 +208,18 @@ class ArimaaGame:
 
         # Condición de victoria por eliminación de conejos
         if black_rabbits == 0:
-            print("¡Plata gana! (Oro sin conejos)")
+            print("¡White gana! (Black sin conejos)")
             self.end_game()
         if white_rabbits == 0:
-            print("¡Oro gana! (Plata sin conejos)")
+            print("¡Black gana! (White sin conejos)")
             self.end_game()
 
         # Condición de victoria por inmovilidad
         if not black_has_moves:
-            print("¡Plata gana! (Oro inmovilizado)")
+            print("¡White gana! (Black inmovilizado)")
             self.end_game()
         if not white_has_moves:
-            print("¡Oro gana! (Plata inmovilizada)")
+            print("¡Black gana! (White inmovilizada)")
             self.end_game()      
     
     def change_turn(self, trap_positions):
