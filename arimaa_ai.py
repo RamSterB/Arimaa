@@ -200,7 +200,6 @@ def minimax(board, depth, is_maximizing_player, alpha=float('-inf'), beta=float(
         for move in moves:
             new_board = apply_move(board, move)
             eval = minimax(new_board, depth - 1, False, alpha, beta)
-            print(move, eval)
             max_eval = max(max_eval, eval)
             alpha = max(alpha, eval)
             if beta <= alpha:
@@ -212,7 +211,6 @@ def minimax(board, depth, is_maximizing_player, alpha=float('-inf'), beta=float(
             new_board = apply_move(board, move)
             eval = minimax(new_board, depth - 1, True, alpha, beta)
             min_eval = min(min_eval, eval)
-            print(move, eval)
             beta = min(beta, eval)
             if beta <= alpha:
                 break
@@ -234,7 +232,7 @@ def find_best_move(board, player):
     for move in moves:
         new_board = apply_move(board, move)
         move_value = minimax(new_board, 2, player == "white")
-        #print(move, move_value)
+        print(move, move_value)
         if (player == "black" and move_value >= best_value) or (player == "white" and move_value <= best_value):
             best_value = move_value
             best_move = move
