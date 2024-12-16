@@ -74,7 +74,7 @@ class ArimaaGame:
             raise ValueError("Se han tomado demasiados pasos en este turno.")
         
         # Verificar que la pieza no se mueva a una trampa
-        if self.check_trap_positions(self.trap_positions):
+        if self.check_trap_positions(self.trap_positions) and self.current_player == "white":
             raise ValueError("La pieza ha caído en una trampa sin apoyo.")
 
         # Si todas las validaciones pasan, realizamos el movimiento

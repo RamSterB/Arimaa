@@ -46,27 +46,27 @@ def evaluate_board(board):
                                 has_friendly_adjacent = True
                                 break
                     
-                    # Bonificar si no hay piezas enemigas adyacentes
+                    # Bonificar si no hay piezas enemigas adyacentes lower
                     if not has_friendly_adjacent and board[row_idx][col_idx].islower():
                         value += 20
                     # Penalizar si no hay piezas aliadas adyacentes
                     if not has_friendly_adjacent and board[row_idx][col_idx].isupper():
-                        value -= 10
+                        value -= 20
 
     mobility_black = len(generate_moves(board, "black"))
     mobility_white = len(generate_moves(board, "white"))
-    value += (mobility_black - mobility_white) * 0.4
+    value += (mobility_black - mobility_white) * 0.2
 
     return value
 
-def has_adjacent_ally(board, trap_pos, player):
-    row, col = trap_pos
+def has_adjacent_ally(board, new_pos, player):
+    row, col = new_pos
     for dr, dc in [(-1,0), (1,0), (0,-1), (0,1)]:
         adj_row, adj_col = row + dr, col + dc
         if 0 <= adj_row < 8 and 0 <= adj_col < 8:
             piece = board[adj_row][adj_col]
             if piece:
-                if player == "white" and piece.islower():
+                if player == "white" and piece.islower():        
                     return True
                 if player == "black" and piece.isupper():
                     return True
