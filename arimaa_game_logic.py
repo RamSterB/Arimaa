@@ -72,6 +72,10 @@ class ArimaaGame:
         # Asegurarse de que no se realicen más de 4 movimientos en un turno
         if self.steps_taken >= 4:
             raise ValueError("Se han tomado demasiados pasos en este turno.")
+        
+        # Verificar que la pieza no se mueva a una trampa
+        if self.check_trap_positions(self.trap_positions):
+            raise ValueError("La pieza ha caído en una trampa sin apoyo.")
 
         # Si todas las validaciones pasan, realizamos el movimiento
         self.board[start_row][start_col] = None
@@ -129,6 +133,8 @@ class ArimaaGame:
             piece = self.get_piece_at((row, col))
             if piece and not self.has_support((row, col)):
                 self.board[row][col] = None
+                return True
+        return False
 
     def has_support(self, position):
         """Verifica si una pieza en una posición tiene apoyo de aliados adyacentes."""
@@ -137,7 +143,7 @@ class ArimaaGame:
         if not piece:
             return False
 
-        allies = set("RCDHEP" if piece.isupper() else "rcdhep")
+        allies = set("RCDHEA" if piece.isupper() else "rcdhea")
         for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
             adj_row, adj_col = row + dr, col + dc
             if 0 <= adj_row < 8 and 0 <= adj_col < 8:
