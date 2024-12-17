@@ -1,11 +1,13 @@
 from arimaa_ai import find_best_move
-from arimaa_utils import is_frozen, piece_weights
+from arimaa_utils import is_frozen, pull_piece, push_piece
+import pygame
 
 class ArimaaGame:
-    def __init__(self):
+    def __init__(self, gui=None):
         self.board = self.initialize_board()
         self.current_player = "white"
         self.steps_taken = 0
+        self.gui = gui  # Referencia a la GUI
         self.piece_weights = {
             "E": 5,  # Elefante
             "A": 4,  # Camello
@@ -15,14 +17,15 @@ class ArimaaGame:
             "R": 0,  # Conejo
             "e": 5, "a": 4, "h": 3, "d": 2, "c": 1, "r": 0
         }
+        self.trap_positions = [(2, 2), (2, 5), (5, 2), (5, 5)]
 
     def initialize_board(self):
         """Inicializa el tablero con las piezas en sus posiciones iniciales."""
         board = [[None for _ in range(8)] for _ in range(8)]
-        # Configuración inicial del oro
+        # Configuración inicial del Black
         board[1] = ["C", "D", "H", "A", "E", "H", "D", "C"]
         board[0] = ["R"] * 8
-        # Configuración inicial de la plata
+        # Configuración inicial de la White
         board[7] = ["r"] * 8
         board[6] = ["c", "d", "h", "a", "e", "h", "d", "c"]
         return board
@@ -69,6 +72,10 @@ class ArimaaGame:
         # Asegurarse de que no se realicen más de 4 movimientos en un turno
         if self.steps_taken >= 4:
             raise ValueError("Se han tomado demasiados pasos en este turno.")
+        
+        # Verificar que la pieza no se mueva a una trampa
+        if self.check_trap_positions(self.trap_positions) and self.current_player == "white":
+            raise ValueError("La pieza ha caído en una trampa sin apoyo.")
 
         # Si todas las validaciones pasan, realizamos el movimiento
         self.board[start_row][start_col] = None
@@ -79,17 +86,44 @@ class ArimaaGame:
     def make_best_move(self):
         """Realiza el mejor movimiento usando el algoritmo minimax."""
         for _ in range(4 - self.steps_taken):
-            best_move = find_best_move(self.board)  # Usar la instancia de AI
+            best_move = find_best_move(self.board, self.current_player)
             if best_move:
-                start, end = best_move
-                if start != end:
-                    self.move_piece(start, end)
-                    print(f"IA realizó el movimiento de {start} a {end}")
+                if len(best_move) == 2:
+                    # Movimiento simple
+                    start, end = best_move
+                    if start != end:
+                        self.move_piece(start, end)
+                        self.check_trap_positions(self.trap_positions)
+                        print(f"IA realizó el movimiento de {start} a {end}")
+                        # Actualiza el tablero
+                        if self.gui:
+                            self.gui.draw_board()
+                            self.gui.draw_pieces()
+                            pygame.display.flip()
+                elif len(best_move) == 4:
+                    # Movimiento de empuje/jalón
+                    move_type, origin, affected, destination = best_move
+                    if move_type == "push":
+                        self.push_piece(origin, affected, destination)
+                        print(f"IA realizó empuje desde {origin} a {destination}")
+                        # Actualiza el tablero
+                        if self.gui:
+                            self.gui.draw_board()
+                            self.gui.draw_pieces()
+                            pygame.display.flip()
+                    elif move_type == "pull":
+                        self.pull_piece(origin, affected, destination)
+                        print(f"IA realizó jalón desde {origin} a {destination}")
+                        # Actualiza el tablero
+                        if self.gui:
+                            self.gui.draw_board()
+                            self.gui.draw_pieces()
+                            pygame.display.flip()
                 else:
-                    print("El mejor movimiento encontrado deja la pieza en la misma posición.")
+                    print("El mejor movimiento encontrado no es válido.")
             else:
                 print("No hay movimientos disponibles para la IA.")
-    
+        
     def is_frozen(self, position):
         return is_frozen(self.board, position)
 
@@ -99,6 +133,8 @@ class ArimaaGame:
             piece = self.get_piece_at((row, col))
             if piece and not self.has_support((row, col)):
                 self.board[row][col] = None
+                return True
+        return False
 
     def has_support(self, position):
         """Verifica si una pieza en una posición tiene apoyo de aliados adyacentes."""
@@ -107,7 +143,7 @@ class ArimaaGame:
         if not piece:
             return False
 
-        allies = set("RCDHEP" if piece.isupper() else "rcdhep")
+        allies = set("RCDHEA" if piece.isupper() else "rcdhea")
         for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
             adj_row, adj_col = row + dr, col + dc
             if 0 <= adj_row < 8 and 0 <= adj_col < 8:
@@ -121,70 +157,18 @@ class ArimaaGame:
         if self.steps_taken + 2 > 4:
             raise ValueError("Empuje inválido: no se pueden tomar más de 4 pasos en un turno.")
         
-        pusher = self.get_piece_at(pusher_pos)
-        pushed = self.get_piece_at(pushed_pos)
-
-        # Validar que ambas piezas existen
-        if not pusher or not pushed:
-            raise ValueError("Empuje inválido: falta una pieza.")
-
-        # El empujador debe ser más fuerte que la pieza empujada
-        if self.piece_weights[pusher] <= self.piece_weights[pushed]:
-            raise ValueError("Empuje inválido: el empujador debe ser más fuerte que la pieza empujada.")
-
-        # La nueva posición debe estar vacía
-        if self.board[new_pos[0]][new_pos[1]] is not None:
-            raise ValueError("Empuje inválido: la nueva posición debe estar vacía.")
-
-        # Validar que las posiciones son adyacentes
-        if abs(pusher_pos[0] - pushed_pos[0]) + abs(pusher_pos[1] - pushed_pos[1]) != 1:
-            raise ValueError("Empuje inválido: el empujador no está adyacente a la pieza empujada.")
-        if abs(pushed_pos[0] - new_pos[0]) + abs(pushed_pos[1] - new_pos[1]) != 1:
-            raise ValueError("Empuje inválido: la nueva posición no está adyacente a la pieza empujada.")
-            
-        
-        # Realizar el empuje
-        self.board[pusher_pos[0]][pusher_pos[1]] = None  # El empujador deja su posición
-        self.board[new_pos[0]][new_pos[1]] = pushed     # La pieza empujada se mueve
-        self.board[pushed_pos[0]][pushed_pos[1]] = pusher  # El empujador toma el lugar de la pieza empujada
+        new_board = push_piece(self.board, pusher_pos, pushed_pos, new_pos)
+        self.board = new_board
         self.steps_taken += 2
-
 
     def pull_piece(self, puller_pos, pulled_pos, new_pos):
         """Jala una pieza enemiga hacia la posición anterior del jalador."""
-        
         if self.steps_taken + 2 > 4:
             raise ValueError("Jalada inválida: no se pueden tomar más de 4 pasos en un turno.")
         
-        puller = self.get_piece_at(puller_pos)
-        pulled = self.get_piece_at(pulled_pos)
-
-        # Validar que ambas piezas existen
-        if not puller or not pulled:
-            raise ValueError("Jalada inválida: falta una pieza.")
-
-        # El jalador debe ser más fuerte que la pieza jalada
-        if self.piece_weights[puller] <= self.piece_weights[pulled]:
-            raise ValueError("Jalada inválida: el jalador debe ser más fuerte que la pieza jalada.")
-
-        # La nueva posición debe estar vacía
-        if self.board[new_pos[0]][new_pos[1]] is not None:
-            raise ValueError("Jalada inválida: la nueva posición debe estar vacía.")
-
-        # Validar que las posiciones son adyacentes
-        if abs(puller_pos[0] - pulled_pos[0]) + abs(puller_pos[1] - pulled_pos[1]) != 1:
-            raise ValueError("Jalada inválida: el jalador no está adyacente a la pieza jalada.")
-        if abs(puller_pos[0] - new_pos[0]) + abs(puller_pos[1] - new_pos[1]) != 1:
-            raise ValueError("Jalada inválida: la nueva posición no está adyacente al jalador.")
-
-        # Realizar la jalada
-        self.board[puller_pos[0]][puller_pos[1]] = None  # El jalador deja su posición
-        self.board[pulled_pos[0]][pulled_pos[1]] = None  # La pieza jalada deja su posición original
-        self.board[new_pos[0]][new_pos[1]] = puller     # El jalador se mueve a la nueva posición
-        self.board[puller_pos[0]][puller_pos[1]] = pulled  # La pieza jalada toma el lugar del jalador
+        new_board = pull_piece(self.board, puller_pos, pulled_pos, new_pos)
+        self.board = new_board
         self.steps_taken += 2
-
-
 
     def check_victory_conditions(self):
         """Verifica si se han cumplido las condiciones de victoria."""
@@ -203,12 +187,12 @@ class ArimaaGame:
                 if piece == "R":
                     black_rabbits += 1
                     if row == 7:
-                        print("¡Oro gana!")
+                        print("¡Black win!")
                         self.end_game()
                 elif piece == "r":
                     white_rabbits += 1
                     if row == 0:
-                        print("¡Plata gana!")
+                        print("¡White win!")
                         self.end_game()
 
                 # Verificar si la pieza puede moverse (no está congelada)
@@ -224,18 +208,18 @@ class ArimaaGame:
 
         # Condición de victoria por eliminación de conejos
         if black_rabbits == 0:
-            print("¡Plata gana! (Oro sin conejos)")
+            print("¡White gana! (Black sin conejos)")
             self.end_game()
         if white_rabbits == 0:
-            print("¡Oro gana! (Plata sin conejos)")
+            print("¡Black gana! (White sin conejos)")
             self.end_game()
 
         # Condición de victoria por inmovilidad
         if not black_has_moves:
-            print("¡Plata gana! (Oro inmovilizado)")
+            print("¡White gana! (Black inmovilizado)")
             self.end_game()
         if not white_has_moves:
-            print("¡Oro gana! (Plata inmovilizada)")
+            print("¡Black gana! (White inmovilizada)")
             self.end_game()      
     
     def change_turn(self, trap_positions):
@@ -244,7 +228,6 @@ class ArimaaGame:
         self.steps_taken = 0
         
         # Validar estado
-        self.check_trap_positions(trap_positions)
         self.check_victory_conditions()
 
         # Activar IA para whites
@@ -254,7 +237,10 @@ class ArimaaGame:
                 self.current_player = "white"
                 self.steps_taken = 0
             except Exception as e:
-                print(f"Error en movimiento de IA: {e}")
+                 print(f"Error en movimiento de IA: {e}")
+                 if e.args[0] == "Se han tomado demasiados pasos en este turno." or e.args[0] == "Jalada inválida: no se pueden tomar más de 4 pasos en un turno." or e.args[0] == "Empuje inválido: no se pueden tomar más de 4 pasos en un turno.":
+                     self.change_turn(trap_positions)
+                     print("Se cambió el turno debido a un error en la IA.")
 
     def end_game(self):
         """Finaliza el juego."""
