@@ -22,7 +22,7 @@ def is_frozen(board, position):
             if adj_piece:
                 if adj_piece in allies:
                     has_ally = True
-                elif adj_piece in enemies and piece_weights[adj_piece] >= piece_weights[piece]:
+                elif adj_piece in enemies and piece_weights[adj_piece] > piece_weights[piece]:
                     is_overpowered = True
 
     return is_overpowered and not has_ally
